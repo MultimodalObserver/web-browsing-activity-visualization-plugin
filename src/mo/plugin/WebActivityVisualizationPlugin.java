@@ -8,6 +8,7 @@ import mo.core.plugin.Extension;
 import mo.organization.Configuration;
 import mo.organization.ProjectOrganization;
 import mo.organization.StagePlugin;
+import mo.plugin.views.ConfigurationDialog;
 import mo.visualization.VisualizationProvider;
 
 import java.io.*;
@@ -43,7 +44,14 @@ public class WebActivityVisualizationPlugin implements VisualizationProvider {
 
     @Override
     public Configuration initNewConfiguration(ProjectOrganization projectOrganization) {
-        return null;
+        ConfigurationDialog configurationDialog = new ConfigurationDialog();
+        configurationDialog.showDialog();
+        if(!configurationDialog.isAccepted()){
+            return null;
+        }
+        PluginConfiguration pluginConfiguration = new PluginConfiguration(configurationDialog.getTemporalConfig());
+        this.configurations.add(pluginConfiguration);
+        return pluginConfiguration;
     }
 
     @Override

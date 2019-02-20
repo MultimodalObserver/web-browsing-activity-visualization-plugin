@@ -40,21 +40,77 @@ public class Player implements Playable {
 
     public Player(Map filesMap, String configurationName){
         this.dataMap = this.readData(filesMap);
+        this.panel = new PlayerPanel();
+        this.dockableElement = new DockableElement();
+        this.dockableElement.setTitleText("Visualization: " + configurationName);
+        this.dockableElement.add(this.panel);
+        this.dockablesRegistry = DockablesRegistry.getInstance();
+        this.dockablesRegistry.addAppWideDockable(dockableElement);
     }
 
+    /* Encontramos el tiempo menor de todos los registros de todos los tipos de datos que contiene la estructura
+    *
+    * Esto implica que al reproducir hay que validar que exista un registro de cada tipo de dato asociado al
+    * tiempo de reproduccion actual*/
     @Override
     public long getStart() {
-        return 0;
+        this.start = 0;
+        List<Long> minCaptureMilliseconds = new ArrayList<>();
+        for(Object key : this.dataMap.keySet()){
+            String dataType = (String) key;
+            Map<String, List<JsonObject>> jsonObjectsByPage = this.dataMap.get(dataType);
+            for(Object page: jsonObjectsByPage.keySet()){
+                String pageTitle = (String) page;
+                List<JsonObject> jsonObjects = jsonObjectsByPage.get(pageTitle);
+                minCaptureMilliseconds.add(jsonObjects.get(0).get(CAPTURE_MILLISECONDS_KEY).getAsLong());
+            }
+        }
+        long min = minCaptureMilliseconds.get(0);
+        for(Long captureMilliseconds : minCaptureMilliseconds){
+            if(captureMilliseconds < min){
+                min = captureMilliseconds;
+            }
+        }
+        this.start = min;
+        return this.start;
     }
 
+    /* Para encontrar el final o maximo tiempo de captura, aplicamos la misma lógica que para encontrar el inicio o minimo*/
     @Override
     public long getEnd() {
-        return 0;
+        this.end = 0;
+        List<Long> maxCaptureMilliseconds = new ArrayList<>();
+        for(Object key : this.dataMap.keySet()){
+            String dataType = (String) key;
+            Map<String, List<JsonObject>> jsonObjectsByPage = this.dataMap.get(dataType);
+            for(Object page: jsonObjectsByPage.keySet()){
+                String pageTitle = (String) page;
+                List<JsonObject> jsonObjects = jsonObjectsByPage.get(pageTitle);
+                maxCaptureMilliseconds.add(jsonObjects.get(jsonObjects.size()-1).get(CAPTURE_MILLISECONDS_KEY).getAsLong());
+            }
+        }
+        long max = maxCaptureMilliseconds.get(0);
+        for(Long captureMilliseconds : maxCaptureMilliseconds){
+            if(captureMilliseconds > max){
+                max = captureMilliseconds;
+            }
+        }
+        this.end = max;
+        return this.end;
     }
 
     @Override
     public void play(long l) {
-
+        Map<String, Map<String, JsonObject>> searchedDataMap = this.getDataByCaptureMilliseconds(l);
+        /* Solo actualizamos el panel cuando se encuentra un registro con ese tiempo */
+        if(searchedDataMap == null){
+            return;
+        }
+        else if(l == this.start){
+            this.panel.createViews(searchedDataMap);
+            return;
+        }
+        this.panel.updateViews(searchedDataMap);
     }
 
     @Override
@@ -64,12 +120,12 @@ public class Player implements Playable {
 
     @Override
     public void seek(long l) {
-
+        this.play(l);
     }
 
     @Override
     public void stop() {
-
+        this.panel.removeViews();
     }
 
     @Override
@@ -145,9 +201,46 @@ public class Player implements Playable {
         for(JsonObject object: fileDataList){
             Object objectKeyValue = object.get("pageTitle");
             if(resultMap.containsKey(objectKeyValue)){
+                /* Asumimos que los datos están ordenados segun tiempo de captura*/
                 resultMap.get(objectKeyValue).add(object);
             }
         }
         return resultMap;
+    }
+
+
+    /* Encontramos los registros de los tipos de datos capturados en el instante de tiempo deseado, agrupados
+    por sitio web tambien.
+
+    Asumimos que cada tipo de dato posee un registro único en ese instante de tiempo, es decir, no se puede
+    haber movido el mouse dos veces en el mismo instante, ni presionado dos teclas (evaluar esto!!!), etc..
+
+    Si no se encuentran registros, de todos los tipos de datos, para ese instante de tiempo, devolvemos nulo
+     */
+    private Map<String, Map<String, JsonObject>> getDataByCaptureMilliseconds(long milliseconds){
+        if(milliseconds < this.start || milliseconds > this.end){
+            return null;
+        }
+        Map<String, Map<String, JsonObject>> searchedDataMap = new HashMap<>();
+        for(Object key : this.dataMap.keySet()){
+            String dataType = (String) key;
+            Map<String, List<JsonObject>> jsonObjectsByPage = this.dataMap.get(dataType);
+            for(Object page : jsonObjectsByPage.keySet()){
+                String pageTitle = (String) page;
+                List<JsonObject> jsonObjects = jsonObjectsByPage.get(pageTitle);
+                for(JsonObject jsonObject : jsonObjects){
+                    if(jsonObject.get(CAPTURE_MILLISECONDS_KEY).getAsLong() == milliseconds){
+                        Map<String, JsonObject> data = new HashMap<>();
+                        data.put(pageTitle, jsonObject);
+                        searchedDataMap.put(dataType, data);
+                    }
+                }
+            }
+
+        }
+        if(searchedDataMap.isEmpty()){
+            return null;
+        }
+        return searchedDataMap;
     }
 }
