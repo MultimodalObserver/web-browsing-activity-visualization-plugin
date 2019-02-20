@@ -40,7 +40,7 @@ public class Player implements Playable {
 
     public Player(Map filesMap, String configurationName){
         this.dataMap = this.readData(filesMap);
-        this.panel = new PlayerPanel();
+        this.panel = new PlayerPanel(this.getDataTypes(this.dataMap));
         this.dockableElement = new DockableElement();
         this.dockableElement.setTitleText("Visualization: " + configurationName);
         this.dockableElement.add(this.panel);
@@ -242,5 +242,9 @@ public class Player implements Playable {
             return null;
         }
         return searchedDataMap;
+    }
+
+    private List<String> getDataTypes(Map<String, Map<String, List<JsonObject>>> dataMap){
+        return null;
     }
 }
