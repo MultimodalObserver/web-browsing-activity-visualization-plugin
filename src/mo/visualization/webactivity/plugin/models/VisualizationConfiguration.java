@@ -1,4 +1,4 @@
-package mo.plugin.models;
+package mo.visualization.webactivity.plugin.models;
 
 public class VisualizationConfiguration {
     private String name;

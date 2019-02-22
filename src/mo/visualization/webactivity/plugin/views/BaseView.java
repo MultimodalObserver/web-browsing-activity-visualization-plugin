@@ -1,24 +1,28 @@
-package mo.plugin.views;
+package mo.visualization.webactivity.plugin.views;
 
 import com.google.gson.JsonObject;
 
 import javax.swing.*;
 import java.util.Map;
 
-public class KeystrokesView extends BaseView {
+public class BaseView extends JFrame {
 
-    @Override
+    protected String dataType;
+
     public void createView(Map<String, Map<String, JsonObject>> searchedDataMap){
 
     }
 
-    @Override
     public void updateView(Map<String, Map<String, JsonObject>> searchedDataMap){
 
     }
 
-    @Override
     public void removeView(){
 
     }
+
+    protected boolean canPlayData(Map<String, Map<String, JsonObject>> searchedDataMap){
+        return searchedDataMap.containsKey(this.dataType);
+    }
+
 }

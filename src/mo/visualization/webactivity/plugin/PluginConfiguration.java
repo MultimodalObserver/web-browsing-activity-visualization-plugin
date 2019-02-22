@@ -1,9 +1,9 @@
-package mo.plugin;
+package mo.visualization.webactivity.plugin;
 
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import mo.organization.Configuration;
-import mo.plugin.models.VisualizationConfiguration;
+import mo.visualization.webactivity.plugin.models.VisualizationConfiguration;
 import mo.visualization.Playable;
 import mo.visualization.VisualizableConfiguration;
 
@@ -16,7 +16,7 @@ import java.util.logging.Logger;
 public class PluginConfiguration implements VisualizableConfiguration {
 
     private static final Logger LOGGER = Logger.getLogger(PluginConfiguration.class.getName());
-    private static final String[] CREATORS = new String[] {"mo.plugin.WebBrowsingActivityRecorder"};
+    private static final String[] CREATORS = new String[] {"mo.capture.webactivity.plugin.WebBrowsingActivityRecorder"};
     private VisualizationConfiguration temporalConfig;
     private List<File> files;
     private Player player;

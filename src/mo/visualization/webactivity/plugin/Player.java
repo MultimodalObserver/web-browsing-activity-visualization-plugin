@@ -1,10 +1,10 @@
-package mo.plugin;
+package mo.visualization.webactivity.plugin;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import mo.core.ui.dockables.DockableElement;
 import mo.core.ui.dockables.DockablesRegistry;
-import mo.plugin.views.PlayerPanel;
+import mo.visualization.webactivity.plugin.views.PlayerPanel;
 import mo.visualization.Playable;
 
 import java.io.BufferedReader;
@@ -34,13 +34,15 @@ public class Player implements Playable {
     private long start;
     private long end;
     private PlayerPanel panel;
+    private List<String> dataTypes;
     private DockablesRegistry dockablesRegistry;
     private DockableElement dockableElement;
     private static final Logger LOGGER = Logger.getLogger(Player.class.getName());
 
     public Player(Map filesMap, String configurationName){
+        this.dataTypes = new ArrayList<>();
         this.dataMap = this.readData(filesMap);
-        this.panel = new PlayerPanel(this.getDataTypes(this.dataMap));
+        this.panel = new PlayerPanel(this.dataTypes);
         this.dockableElement = new DockableElement();
         this.dockableElement.setTitleText("Visualization: " + configurationName);
         this.dockableElement.add(this.panel);
@@ -153,11 +155,12 @@ public class Player implements Playable {
     private Map<String, Map<String, List<JsonObject>>> readData(Map filesMap){
         Map<String, Map<String, List<JsonObject>>> dataMap = new HashMap<>();
         for(Object key: filesMap.keySet()){
-            String filePath = (String) filesMap.get((String) key);
+            String filePath = (String) filesMap.get((key));
             File file = new File(filePath);
             if(!file.isFile()){
                 break;
             }
+            this.dataTypes.add((String) key);
             List<JsonObject> fileDataList = new ArrayList<>();
             try {
                 FileReader fileReader = new FileReader(filePath);
@@ -242,9 +245,5 @@ public class Player implements Playable {
             return null;
         }
         return searchedDataMap;
-    }
-
-    private List<String> getDataTypes(Map<String, Map<String, List<JsonObject>>> dataMap){
-        return null;
     }
 }

@@ -1,8 +1,8 @@
-package mo.plugin.views;
+package mo.visualization.webactivity.plugin.views;
 
 import mo.core.I18n;
 import mo.core.ui.Utils;
-import mo.plugin.models.VisualizationConfiguration;
+import mo.visualization.webactivity.plugin.models.VisualizationConfiguration;
 
 import javax.swing.*;
 import java.awt.*;
