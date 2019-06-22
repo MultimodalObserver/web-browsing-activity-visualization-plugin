@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 
@@ -29,7 +30,7 @@ import java.util.stream.Stream;
  */
 public class Player implements Playable {
 
-    private Map<String, Map<String, List<JsonObject>>> dataMap;
+    private Map<String, List<JsonObject>> dataMap;
     private static final String CAPTURE_MILLISECONDS_KEY = "captureMilliseconds";
     private long start;
     private long end;
@@ -60,12 +61,8 @@ public class Player implements Playable {
         List<Long> minCaptureMilliseconds = new ArrayList<>();
         for(Object key : this.dataMap.keySet()){
             String dataType = (String) key;
-            Map<String, List<JsonObject>> jsonObjectsByPage = this.dataMap.get(dataType);
-            for(Object page: jsonObjectsByPage.keySet()){
-                String pageTitle = (String) page;
-                List<JsonObject> jsonObjects = jsonObjectsByPage.get(pageTitle);
-                minCaptureMilliseconds.add(jsonObjects.get(0).get(CAPTURE_MILLISECONDS_KEY).getAsLong());
-            }
+            List<JsonObject> jsonObjectsByDataType = this.dataMap.get(dataType);
+            minCaptureMilliseconds.add(jsonObjectsByDataType.get(0).get(CAPTURE_MILLISECONDS_KEY).getAsLong());
         }
         long min = minCaptureMilliseconds.get(0);
         for(Long captureMilliseconds : minCaptureMilliseconds){
@@ -84,12 +81,8 @@ public class Player implements Playable {
         List<Long> maxCaptureMilliseconds = new ArrayList<>();
         for(Object key : this.dataMap.keySet()){
             String dataType = (String) key;
-            Map<String, List<JsonObject>> jsonObjectsByPage = this.dataMap.get(dataType);
-            for(Object page: jsonObjectsByPage.keySet()){
-                String pageTitle = (String) page;
-                List<JsonObject> jsonObjects = jsonObjectsByPage.get(pageTitle);
-                maxCaptureMilliseconds.add(jsonObjects.get(jsonObjects.size()-1).get(CAPTURE_MILLISECONDS_KEY).getAsLong());
-            }
+            List<JsonObject> jsonObjectsByDataType = this.dataMap.get(dataType);
+            maxCaptureMilliseconds.add(jsonObjectsByDataType.get(jsonObjectsByDataType.size()-1).get(CAPTURE_MILLISECONDS_KEY).getAsLong());
         }
         long max = maxCaptureMilliseconds.get(0);
         for(Long captureMilliseconds : maxCaptureMilliseconds){
@@ -103,16 +96,15 @@ public class Player implements Playable {
 
     @Override
     public void play(long l) {
-        Map<String, Map<String, JsonObject>> searchedDataMap = this.getDataByCaptureMilliseconds(l);
-        /* Solo actualizamos el panel cuando se encuentra un registro con ese tiempo */
-        if(searchedDataMap == null){
-            return;
+        /* reproducimos todas las vistas al mismo tiempo!!*/
+        for(String dataType : this.dataTypes){
+            List<JsonObject> searchedData = this.getDataByCaptureMilliseconds(l, dataType);
+            /* Solo actualizamos el panel cuando se han encontrado  registros con ese tiempo o menor */
+            if(searchedData == null || searchedData.isEmpty()){
+                continue;
+            }
+            this.panel.updatePanelData(searchedData, dataType);
         }
-        else if(l == this.start){
-            this.panel.createViews(searchedDataMap);
-            return;
-        }
-        this.panel.updateViews(searchedDataMap);
     }
 
     @Override
@@ -127,7 +119,7 @@ public class Player implements Playable {
 
     @Override
     public void stop() {
-        this.panel.removeViews();
+        this.panel.showPanel(false);
     }
 
     @Override
@@ -139,21 +131,18 @@ public class Player implements Playable {
     /* EN este metodo se cargan todos los datos de todos los archivos, en la siguiente estructura:
 
         map = {
-            'keystrokes': {
-                'sitio_web_1': [lista de datos de keystroke que pertenencen a sitio web 1],
-                'sitio_web_2': [lista de datos de keystroke que pertenencen a sitio web 2],
-                ...
-            },
-            'mouseMoves': {
-                'sitio_web_1': [lista de datos de mouseMoves que pertenencen a sitio web 1],
-                'sitio_web_2': [lista de datos de mouseMoves que pertenencen a sitio web 2],
-                ...
-            },
+            'keystrokes': {lista de keystrokes },
+            'mouseMoves': {lista de mouseMouves}
             ...
         }
+
+
+        /* AQUI CREAR UN MAPA <string, list<modeloTipoDato>>
+
+        ES EL PLAYER EL ENCARGADO DE ALMACENAR TODOS LOS REGISTROS DE CADA TIPO DE DATO, Y ENTREGARLOS A LOS PANELES QUE CORRESPONDAN.
      */
-    private Map<String, Map<String, List<JsonObject>>> readData(Map filesMap){
-        Map<String, Map<String, List<JsonObject>>> dataMap = new HashMap<>();
+    private Map<String, List<JsonObject>> readData(Map filesMap){
+        Map<String, List<JsonObject>> dataMap = new HashMap<>();
         for(Object key: filesMap.keySet()){
             String filePath = (String) filesMap.get((key));
             File file = new File(filePath);
@@ -167,83 +156,31 @@ public class Player implements Playable {
                 BufferedReader bufferedReader = new BufferedReader(fileReader);
                 String line;
                 JsonParser parser = new JsonParser();
-                //Obtenemos los datos de los snapshots de procesos y los agregamos a una lista
                 while((line = bufferedReader.readLine()) != null){
                     line = line.replace("\n", "");
                     JsonObject dataObject = parser.parse(line).getAsJsonObject();
                     fileDataList.add(dataObject);
                 }
+                dataMap.put((String) key, fileDataList);
             } catch (IOException e) {
                 LOGGER.log(Level.SEVERE, "", e);
                 break;
             }
-            Map groupedMap = this.groupByPageTitle(fileDataList);
-            //AQUI HAY QUE AGRUPAR POR SITIO WEB!!!
-            dataMap.put((String) key , groupedMap);
         }
         return dataMap;
     }
 
-    private Map groupByPageTitle(List<JsonObject> fileDataList){
-        if(fileDataList == null || fileDataList.isEmpty()){
-            return null;
-        }
-        /* Obtenemos todos los registros unicos de de pageTitle*/
-        Object[] aux = fileDataList.stream().map(jsonObject -> {
-            return jsonObject.get("pageTitle").getAsString();
-        }).distinct().toArray();
-        List<String> uniqueKeyValues = Arrays.asList(Arrays.copyOf(aux, aux.length, String[].class));
-        /* Creamos un mapa de resultados*/
-        Map<String, List<JsonObject>> resultMap = new HashMap<>();
-        /* inicializamos el mapa con los pares: pageTitle -> lista de registros que pertenecen a ese sitio*/
-        for(String uniqueKeyValue : uniqueKeyValues){
-            resultMap.put(uniqueKeyValue, new ArrayList<>());
-        }
-        /* Recorremos los registros y agregamos a la lista correspondiente el registro, según el pageTitle al que pertenencen
-         */
-        for(JsonObject object: fileDataList){
-            Object objectKeyValue = object.get("pageTitle");
-            if(resultMap.containsKey(objectKeyValue)){
-                /* Asumimos que los datos están ordenados segun tiempo de captura*/
-                resultMap.get(objectKeyValue).add(object);
-            }
-        }
-        return resultMap;
-    }
 
+    /* La estrategia de visualización es la siguiente:
 
-    /* Encontramos los registros de los tipos de datos capturados en el instante de tiempo deseado, agrupados
-    por sitio web tambien.
-
-    Asumimos que cada tipo de dato posee un registro único en ese instante de tiempo, es decir, no se puede
-    haber movido el mouse dos veces en el mismo instante, ni presionado dos teclas (evaluar esto!!!), etc..
-
-    Si no se encuentran registros, de todos los tipos de datos, para ese instante de tiempo, devolvemos nulo
+    Dado un tiempo que queremos reproducir, buscaremos todos los registros que tengan tiempo igual o menor y los motraremos.
      */
-    private Map<String, Map<String, JsonObject>> getDataByCaptureMilliseconds(long milliseconds){
+    private List<JsonObject> getDataByCaptureMilliseconds(long milliseconds, String dataType){
         if(milliseconds < this.start || milliseconds > this.end){
             return null;
         }
-        Map<String, Map<String, JsonObject>> searchedDataMap = new HashMap<>();
-        for(Object key : this.dataMap.keySet()){
-            String dataType = (String) key;
-            Map<String, List<JsonObject>> jsonObjectsByPage = this.dataMap.get(dataType);
-            for(Object page : jsonObjectsByPage.keySet()){
-                String pageTitle = (String) page;
-                List<JsonObject> jsonObjects = jsonObjectsByPage.get(pageTitle);
-                for(JsonObject jsonObject : jsonObjects){
-                    if(jsonObject.get(CAPTURE_MILLISECONDS_KEY).getAsLong() == milliseconds){
-                        Map<String, JsonObject> data = new HashMap<>();
-                        data.put(pageTitle, jsonObject);
-                        searchedDataMap.put(dataType, data);
-                    }
-                }
-            }
-
-        }
-        if(searchedDataMap.isEmpty()){
-            return null;
-        }
-        return searchedDataMap;
+        return this.dataMap.get(dataType).stream()
+                .filter(jsonObject -> jsonObject.get(CAPTURE_MILLISECONDS_KEY).getAsLong() <= milliseconds)
+                .collect(Collectors.toList());
     }
 }
