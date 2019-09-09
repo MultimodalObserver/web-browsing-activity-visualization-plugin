@@ -8,7 +8,7 @@ import mo.core.plugin.Extension;
 import mo.organization.Configuration;
 import mo.organization.ProjectOrganization;
 import mo.organization.StagePlugin;
-import mo.visualization.webactivity.plugin.views.ConfigurationDialog;
+import mo.visualization.webactivity.plugin.view.ConfigurationDialog;
 import mo.visualization.VisualizationProvider;
 
 import java.io.*;

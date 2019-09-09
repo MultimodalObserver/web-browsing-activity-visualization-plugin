@@ -1,10 +1,11 @@
 package mo.visualization.webactivity.plugin;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import mo.core.ui.dockables.DockableElement;
 import mo.core.ui.dockables.DockablesRegistry;
-import mo.visualization.webactivity.plugin.views.PlayerPanel;
+import mo.visualization.webactivity.plugin.view.PlayerPanel;
 import mo.visualization.Playable;
 
 import java.io.BufferedReader;
@@ -15,7 +16,6 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 
 /* Aqui en el player hay que decidir que datos se vana mostrar:
@@ -30,7 +30,7 @@ import java.util.stream.Stream;
  */
 public class Player implements Playable {
 
-    private Map<String, List<JsonObject>> dataMap;
+    private Map<String, List<String>> dataMap;
     private static final String CAPTURE_MILLISECONDS_KEY = "captureMilliseconds";
     private long start;
     private long end;
@@ -39,8 +39,12 @@ public class Player implements Playable {
     private DockablesRegistry dockablesRegistry;
     private DockableElement dockableElement;
     private static final Logger LOGGER = Logger.getLogger(Player.class.getName());
+    private JsonParser jsonParser;
+    private Gson gson;
 
     public Player(Map filesMap, String configurationName){
+        this.jsonParser = new JsonParser();
+        this.gson = new Gson();
         this.dataTypes = new ArrayList<>();
         this.dataMap = this.readData(filesMap);
         this.panel = new PlayerPanel(this.dataTypes);
@@ -59,10 +63,12 @@ public class Player implements Playable {
     public long getStart() {
         this.start = 0;
         List<Long> minCaptureMilliseconds = new ArrayList<>();
+        JsonParser jsonParser = new JsonParser();
         for(Object key : this.dataMap.keySet()){
             String dataType = (String) key;
-            List<JsonObject> jsonObjectsByDataType = this.dataMap.get(dataType);
-            minCaptureMilliseconds.add(jsonObjectsByDataType.get(0).get(CAPTURE_MILLISECONDS_KEY).getAsLong());
+            List<String> jsonObjectsByDataType = this.dataMap.get(dataType);
+            JsonObject aux = jsonParser.parse(jsonObjectsByDataType.get(0)).getAsJsonObject();
+            minCaptureMilliseconds.add(aux.get(CAPTURE_MILLISECONDS_KEY).getAsLong());
         }
         long min = minCaptureMilliseconds.get(0);
         for(Long captureMilliseconds : minCaptureMilliseconds){
@@ -78,11 +84,13 @@ public class Player implements Playable {
     @Override
     public long getEnd() {
         this.end = 0;
+        JsonParser jsonParser = new JsonParser();
         List<Long> maxCaptureMilliseconds = new ArrayList<>();
         for(Object key : this.dataMap.keySet()){
             String dataType = (String) key;
-            List<JsonObject> jsonObjectsByDataType = this.dataMap.get(dataType);
-            maxCaptureMilliseconds.add(jsonObjectsByDataType.get(jsonObjectsByDataType.size()-1).get(CAPTURE_MILLISECONDS_KEY).getAsLong());
+            List<String> jsonObjectsByDataType = this.dataMap.get(dataType);
+            JsonObject aux = jsonParser.parse(jsonObjectsByDataType.get(jsonObjectsByDataType.size()-1)).getAsJsonObject();
+            maxCaptureMilliseconds.add(aux.get(CAPTURE_MILLISECONDS_KEY).getAsLong());
         }
         long max = maxCaptureMilliseconds.get(0);
         for(Long captureMilliseconds : maxCaptureMilliseconds){
@@ -98,9 +106,9 @@ public class Player implements Playable {
     public void play(long l) {
         /* reproducimos todas las vistas al mismo tiempo!!*/
         for(String dataType : this.dataTypes){
-            List<JsonObject> searchedData = this.getDataByCaptureMilliseconds(l, dataType);
+            String searchedData = this.getDataByCaptureMilliseconds(l, dataType);
             /* Solo actualizamos el panel cuando se han encontrado  registros con ese tiempo o menor */
-            if(searchedData == null || searchedData.isEmpty()){
+            if(searchedData == null){
                 continue;
             }
             this.panel.updatePanelData(searchedData, dataType);
@@ -141,8 +149,8 @@ public class Player implements Playable {
 
         ES EL PLAYER EL ENCARGADO DE ALMACENAR TODOS LOS REGISTROS DE CADA TIPO DE DATO, Y ENTREGARLOS A LOS PANELES QUE CORRESPONDAN.
      */
-    private Map<String, List<JsonObject>> readData(Map filesMap){
-        Map<String, List<JsonObject>> dataMap = new HashMap<>();
+    private Map<String, List<String>> readData(Map filesMap){
+        Map<String, List<String>> dataMap = new HashMap<>();
         for(Object key: filesMap.keySet()){
             String filePath = (String) filesMap.get((key));
             File file = new File(filePath);
@@ -150,16 +158,14 @@ public class Player implements Playable {
                 break;
             }
             this.dataTypes.add((String) key);
-            List<JsonObject> fileDataList = new ArrayList<>();
+            List<String> fileDataList = new ArrayList<>();
             try {
                 FileReader fileReader = new FileReader(filePath);
                 BufferedReader bufferedReader = new BufferedReader(fileReader);
                 String line;
-                JsonParser parser = new JsonParser();
                 while((line = bufferedReader.readLine()) != null){
                     line = line.replace("\n", "");
-                    JsonObject dataObject = parser.parse(line).getAsJsonObject();
-                    fileDataList.add(dataObject);
+                    fileDataList.add(line);
                 }
                 dataMap.put((String) key, fileDataList);
             } catch (IOException e) {
@@ -173,14 +179,16 @@ public class Player implements Playable {
 
     /* La estrategia de visualización es la siguiente:
 
-    Dado un tiempo que queremos reproducir, buscaremos todos los registros que tengan tiempo igual o menor y los motraremos.
+    Dado un tiempo que queremos reproducir, encontraremos un registro y lo agregaremos a las filas de la tabla correspondiente.
      */
-    private List<JsonObject> getDataByCaptureMilliseconds(long milliseconds, String dataType){
+    private String getDataByCaptureMilliseconds(long milliseconds, String dataType){
         if(milliseconds < this.start || milliseconds > this.end){
             return null;
         }
         return this.dataMap.get(dataType).stream()
-                .filter(jsonObject -> jsonObject.get(CAPTURE_MILLISECONDS_KEY).getAsLong() <= milliseconds)
-                .collect(Collectors.toList());
+                .map(jsonObject -> jsonParser.parse(jsonObject).getAsJsonObject())
+                .filter(jsonObject -> jsonObject.get(CAPTURE_MILLISECONDS_KEY).getAsLong() == milliseconds)
+                .map(gson::toJson)
+                .findFirst().orElse(null);
     }
 }

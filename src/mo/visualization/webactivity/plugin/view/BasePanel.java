@@ -1,44 +1,41 @@
-package mo.visualization.webactivity.plugin.views;
+package mo.visualization.webactivity.plugin.view;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import mo.core.I18n;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public abstract class BasePanel extends JPanel {
 
-    protected JLabel noDataLabel;
-    protected JTable table;
-    protected JScrollPane scrollPane;
-    protected DefaultTableModel tableModel;
-    protected I18n i18n;
-    protected List<String> tableHeaders;
-    protected static final Gson gson = new Gson();
+    private JLabel noDataLabel;
+    JTable table;
+    DefaultTableModel tableModel;
+    I18n i18n;
+    List<String> tableHeaders;
+    final Gson gson;
+    float[] columnWidths;
 
 
-    protected BasePanel(){
+    BasePanel(){
         this.i18n = new I18n(BasePanel.class);
+        this.gson = new Gson();
+        this.setLayout(new GridBagLayout());
         this.initComponents();
-        this.addComponents();
     }
 
     abstract List<String> getTableHeaders();
-    abstract void updateData(List<JsonObject> data);
-    abstract Object[][] parseData(List<JsonObject> data);
+    abstract void updateData(String data);
 
 
 
     public void showPanel(boolean show){
         this.setVisible(show);
-    }
-
-    public void setScrollPaneVisibility(boolean scrollPaneVisibility){
-        this.noDataLabel.setVisible(!scrollPaneVisibility);
-        this.scrollPane.setVisible(scrollPaneVisibility);
     }
 
     private void initComponents(){
@@ -50,17 +47,17 @@ public abstract class BasePanel extends JPanel {
         this.table.setCellSelectionEnabled(true);
         this.table.setShowHorizontalLines(false);
         /* Iniciamos el scroll pane que tendra la tabla */
-        this.scrollPane = new JScrollPane(this.table);
-        this.scrollPane.setVisible(false);
-        /* Iniciamos el label de no data y se muestra por defecto*/
-        this.noDataLabel = new JLabel(this.i18n.s("noDataLabelText"));
-        this.noDataLabel.setLocation(this.getWidth() /2,this.getHeight()/2);
+        JScrollPane scrollPane = new JScrollPane(this.table);
+        GridBagConstraints constraints = new GridBagConstraints();
+        constraints.gridx = 0;
+        constraints.gridy = 0;
+        constraints.weighty = 1.0;
+        constraints.weightx = 1.0;
+        constraints.fill = GridBagConstraints.BOTH;
+        constraints.anchor = GridBagConstraints.CENTER;
+        constraints.insets = new Insets(10,10,10,10);
+        this.add(scrollPane, constraints);
         this.setVisible(true);
-    }
-
-    private void addComponents() {
-        this.add(scrollPane);
-        this.add(noDataLabel);
     }
 
     public List<String> initCommonsHeaders(){
@@ -80,5 +77,23 @@ public abstract class BasePanel extends JPanel {
         headers.add(this.i18n.s("yScreenColumnName"));
         headers.add(this.i18n.s("xMovementColumnName"));
         headers.add(this.i18n.s("yMovementColumnName"));
+    }
+
+    void addHeaders(){
+        for(String header: this.tableHeaders){
+            this.tableModel.addColumn(header);
+        }
+    }
+
+    void resizeColumns() {
+        TableColumn column;
+        TableColumnModel jTableColumnModel = this.table.getColumnModel();
+        int tableWidth = jTableColumnModel.getTotalColumnWidth();
+        int cantCols = jTableColumnModel.getColumnCount();
+        for (int i = 0; i < cantCols; i++) {
+            column = jTableColumnModel.getColumn(i);
+            int columnWidth = Math.round(this.columnWidths[i] * tableWidth);
+            column.setPreferredWidth(columnWidth);
+        }
     }
 }
