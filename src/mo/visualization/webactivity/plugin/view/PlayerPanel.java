@@ -20,14 +20,12 @@ public class PlayerPanel extends JTabbedPane {
     /* Los tipos de datos que vienen en el archivo de mapeo a los archivos reales,
     tienen el mismo nombre que las rutas definidas en el plugin de captura, sin considerar el / al inicio!!
      */
-    private static final String KEYSTROKES_DATA_TYPE = "keystrokes";
-    private static final String MOUSE_MOVES_DATA_TYPE = "mouseMoves";
-    private static final String MOUSE_CLICKS_DATA_TYPE = "mouseClicks";
-    private static final String MOUSE_UPS_DATA_TYPE = "mouseUps";
-    private static final String SEARCHS_DATA_TYPE = "searchs";
-    private static final String TABS_DATA_TYPE = "tabs";
-    private static final String[] DATA_TYPES= new String[]{KEYSTROKES_DATA_TYPE,MOUSE_MOVES_DATA_TYPE,MOUSE_CLICKS_DATA_TYPE
-            ,MOUSE_UPS_DATA_TYPE,SEARCHS_DATA_TYPE,TABS_DATA_TYPE};
+    public static final String KEYSTROKES_DATA_TYPE = "keystrokes";
+    public static final String MOUSE_MOVES_DATA_TYPE = "mouseMoves";
+    public static final String MOUSE_CLICKS_DATA_TYPE = "mouseClicks";
+    public static final String MOUSE_UPS_DATA_TYPE = "mouseUps";
+    public static final String SEARCHS_DATA_TYPE = "searchs";
+    public static final String TABS_DATA_TYPE = "tabs";
 
     private I18n i18n;
 
@@ -85,17 +83,9 @@ public class PlayerPanel extends JTabbedPane {
         return panelsMap;
     }
 
-    public void updatePanelData(String data, String dataType){
-        if(this.noDataLabel != null && this.noDataLabel.isVisible()){
-            this.noDataLabel.setText("");
-            this.noDataLabel.setVisible(false);
-        }
+    public void updatePanelData(List<Object> data, String dataType){
         BasePanel panel = this.panelsMap.get(dataType);
         panel.updateData(data);
-        panel.showPanel(true);
     }
 
-    public void showPanel(boolean show){
-        this.setVisible(show);
-    }
 }

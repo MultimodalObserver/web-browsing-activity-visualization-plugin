@@ -1,12 +1,25 @@
 package mo.visualization.webactivity.plugin.model;
 
-public class MouseUp {
+public class MouseUp implements Visualizable {
 
     private String browser;
     private String pageUrl;
     private String pageTitle;
     private String selectedText;
-    private Long captureTimestamp;
+    private Long captureMilliseconds;
+
+    public MouseUp(){
+
+    }
+
+    public MouseUp(String csvLine){
+        String[] data = csvLine.split(Separator.CSV_SEPARATOR.getValue());
+        this.browser = data[0];
+        this.pageUrl = data[1];
+        this.pageTitle = data[2];
+        this.selectedText = data[3];
+        this.captureMilliseconds = Long.parseLong(data[4]);
+    }
 
     public String getBrowser() {
         return browser;
@@ -40,11 +53,11 @@ public class MouseUp {
         this.selectedText = selectedText;
     }
 
-    public Long getCaptureTimestamp() {
-        return captureTimestamp;
+    public Long getCaptureMilliseconds() {
+        return captureMilliseconds;
     }
 
-    public void setCaptureTimestamp(Long captureTimestamp) {
-        this.captureTimestamp = captureTimestamp;
+    public void setCaptureMilliseconds(Long captureMilliseconds) {
+        this.captureMilliseconds = captureMilliseconds;
     }
 }

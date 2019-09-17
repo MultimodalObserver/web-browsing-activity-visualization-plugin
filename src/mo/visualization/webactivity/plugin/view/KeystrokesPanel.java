@@ -24,18 +24,19 @@ class KeystrokesPanel extends BasePanel {
     }
 
     @Override
-    void updateData(String data) {
-        Keystroke keystroke = gson.fromJson(data, Keystroke.class);
-        Object[] rowData = new String[]{
-                keystroke.getBrowser(),
-                keystroke.getPageUrl(),
-                keystroke.getPageTitle(),
-                keystroke.getKeyValue(),
-                keystroke.getCaptureTimestamp()
-        };
-        this.tableModel.addRow(rowData);
-        /*int rowCount = this.table.getRowCount();
-        this.tableModel.fireTableRowsInserted(rowCount, rowCount + 1);*/
+    void updateData(List<Object> data) {
+        this.clearTable();
+        for (Object datum : data) {
+            Keystroke keystroke = (Keystroke) datum;
+            Object[] rowData = new String[]{
+                    keystroke.getBrowser(),
+                    keystroke.getPageUrl(),
+                    keystroke.getPageTitle(),
+                    keystroke.getKeyValue(),
+                    String.valueOf(keystroke.getCaptureMilliseconds())
+            };
+            this.insertNewRow(rowData);
+        }
     }
 
 }

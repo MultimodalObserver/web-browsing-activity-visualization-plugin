@@ -1,58 +1,46 @@
 package mo.visualization.webactivity.plugin;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.reflect.TypeToken;
+import com.google.gson.stream.JsonReader;
+import mo.core.I18n;
 import mo.core.ui.dockables.DockableElement;
 import mo.core.ui.dockables.DockablesRegistry;
+import mo.visualization.webactivity.plugin.model.*;
 import mo.visualization.webactivity.plugin.view.PlayerPanel;
 import mo.visualization.Playable;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
+import java.lang.reflect.Type;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-
-/* Aqui en el player hay que decidir que datos se vana mostrar:
-
-   - Si se mostrarán todos en el mismo panel (datos por sitio o url escrita)
-
-   - Si se mostrarán los datos en un panel aparte, uno por cada tipo de dato
-
-   Esto se debe elegir en la configuración del plugin
-
-   Para el plugin de visualización remota lo mismo.
- */
 public class Player implements Playable {
 
-    private Map<String, List<String>> dataMap;
-    private static final String CAPTURE_MILLISECONDS_KEY = "captureMilliseconds";
+    private Map<String, List<?>> dataMap;
     private long start;
     private long end;
     private PlayerPanel panel;
     private List<String> dataTypes;
-    private DockablesRegistry dockablesRegistry;
-    private DockableElement dockableElement;
     private static final Logger LOGGER = Logger.getLogger(Player.class.getName());
-    private JsonParser jsonParser;
     private Gson gson;
+    private String fileFormat;
 
-    public Player(Map filesMap, String configurationName){
-        this.jsonParser = new JsonParser();
+    public Player(Map filesMap, String configurationName) throws FileNotFoundException {
         this.gson = new Gson();
+        I18n i18n = new I18n(Player.class);
         this.dataTypes = new ArrayList<>();
         this.dataMap = this.readData(filesMap);
         this.panel = new PlayerPanel(this.dataTypes);
-        this.dockableElement = new DockableElement();
-        this.dockableElement.setTitleText("Visualization: " + configurationName);
-        this.dockableElement.add(this.panel);
-        this.dockablesRegistry = DockablesRegistry.getInstance();
-        this.dockablesRegistry.addAppWideDockable(dockableElement);
+        DockableElement dockableElement = new DockableElement();
+        dockableElement.setTitleText(i18n.s("playerTitle") + configurationName);
+        dockableElement.add(this.panel);
+        DockablesRegistry dockablesRegistry = DockablesRegistry.getInstance();
+        dockablesRegistry.addAppWideDockable(dockableElement);
     }
 
     /* Encontramos el tiempo menor de todos los registros de todos los tipos de datos que contiene la estructura
@@ -63,12 +51,11 @@ public class Player implements Playable {
     public long getStart() {
         this.start = 0;
         List<Long> minCaptureMilliseconds = new ArrayList<>();
-        JsonParser jsonParser = new JsonParser();
         for(Object key : this.dataMap.keySet()){
             String dataType = (String) key;
-            List<String> jsonObjectsByDataType = this.dataMap.get(dataType);
-            JsonObject aux = jsonParser.parse(jsonObjectsByDataType.get(0)).getAsJsonObject();
-            minCaptureMilliseconds.add(aux.get(CAPTURE_MILLISECONDS_KEY).getAsLong());
+            List<?> objectsByDataType = this.dataMap.get(dataType);
+            Visualizable firstCapturedObject = (Visualizable) objectsByDataType.get(0);
+            minCaptureMilliseconds.add(firstCapturedObject.getCaptureMilliseconds());
         }
         long min = minCaptureMilliseconds.get(0);
         for(Long captureMilliseconds : minCaptureMilliseconds){
@@ -76,7 +63,8 @@ public class Player implements Playable {
                 min = captureMilliseconds;
             }
         }
-        this.start = min;
+        /* -1 para que el reproductor no comience con datos cargados :S bug MO*/
+        this.start = min - 1;
         return this.start;
     }
 
@@ -84,13 +72,12 @@ public class Player implements Playable {
     @Override
     public long getEnd() {
         this.end = 0;
-        JsonParser jsonParser = new JsonParser();
         List<Long> maxCaptureMilliseconds = new ArrayList<>();
         for(Object key : this.dataMap.keySet()){
             String dataType = (String) key;
-            List<String> jsonObjectsByDataType = this.dataMap.get(dataType);
-            JsonObject aux = jsonParser.parse(jsonObjectsByDataType.get(jsonObjectsByDataType.size()-1)).getAsJsonObject();
-            maxCaptureMilliseconds.add(aux.get(CAPTURE_MILLISECONDS_KEY).getAsLong());
+            List<?> objectsByDataType = this.dataMap.get(dataType);
+            Visualizable lastCapturedObject = (Visualizable) objectsByDataType.get(objectsByDataType.size() - 1);
+            maxCaptureMilliseconds.add(lastCapturedObject.getCaptureMilliseconds());
         }
         long max = maxCaptureMilliseconds.get(0);
         for(Long captureMilliseconds : maxCaptureMilliseconds){
@@ -106,7 +93,7 @@ public class Player implements Playable {
     public void play(long l) {
         /* reproducimos todas las vistas al mismo tiempo!!*/
         for(String dataType : this.dataTypes){
-            String searchedData = this.getDataByCaptureMilliseconds(l, dataType);
+            List<Object> searchedData = this.getDataByCaptureMilliseconds(l, dataType);
             /* Solo actualizamos el panel cuando se han encontrado  registros con ese tiempo o menor */
             if(searchedData == null){
                 continue;
@@ -127,7 +114,6 @@ public class Player implements Playable {
 
     @Override
     public void stop() {
-        this.panel.showPanel(false);
     }
 
     @Override
@@ -149,28 +135,57 @@ public class Player implements Playable {
 
         ES EL PLAYER EL ENCARGADO DE ALMACENAR TODOS LOS REGISTROS DE CADA TIPO DE DATO, Y ENTREGARLOS A LOS PANELES QUE CORRESPONDAN.
      */
-    private Map<String, List<String>> readData(Map filesMap){
-        Map<String, List<String>> dataMap = new HashMap<>();
+    private Map<String, List<?>> readData(Map filesMap) throws FileNotFoundException {
+        Map<String, List<?>> dataMap = new HashMap<>();
+        System.out.println("Voy a leer los datos");
         for(Object key: filesMap.keySet()){
+            System.out.println(key.toString());
+            String auxKey = key.toString();
+            this.dataTypes.add(auxKey);
             String filePath = (String) filesMap.get((key));
-            File file = new File(filePath);
-            if(!file.isFile()){
-                break;
+            List<?> data;
+            if(filePath.endsWith(".csv")){
+                System.out.println("VOY A LEER ARCHIVO CSV: " + filePath);
+                /* Leer datos desde csv por cada tipo de dato*/
+                data = this.readCsvFile(filePath, auxKey);
+                dataMap.put(auxKey, data);
             }
-            this.dataTypes.add((String) key);
-            List<String> fileDataList = new ArrayList<>();
-            try {
-                FileReader fileReader = new FileReader(filePath);
-                BufferedReader bufferedReader = new BufferedReader(fileReader);
-                String line;
-                while((line = bufferedReader.readLine()) != null){
-                    line = line.replace("\n", "");
-                    fileDataList.add(line);
+            else{
+                /* ACTUALIZAR LECTURA DE DATOS USANDO GSON!!!*/
+                System.out.println("VOY A LEER ARCHIVO JSON: " + filePath);
+                JsonReader reader = new JsonReader(new FileReader(filePath));
+                Type type;
+                switch (auxKey) {
+                    case PlayerPanel.KEYSTROKES_DATA_TYPE:
+                        type = new TypeToken<List<Keystroke>>() {
+                        }.getType();
+                        break;
+                    case PlayerPanel.MOUSE_MOVES_DATA_TYPE:
+                        type = new TypeToken<List<MouseMove>>() {
+                        }.getType();
+                        break;
+                    case PlayerPanel.MOUSE_CLICKS_DATA_TYPE:
+                        type = new TypeToken<List<MouseClick>>() {
+                        }.getType();
+                        break;
+                    case PlayerPanel.MOUSE_UPS_DATA_TYPE:
+                        type = new TypeToken<List<MouseUp>>() {
+                        }.getType();
+                        break;
+                    case PlayerPanel.TABS_DATA_TYPE:
+                        type = new TypeToken<List<TabAction>>() {
+                        }.getType();
+                        break;
+                    case PlayerPanel.SEARCHS_DATA_TYPE:
+                        type = new TypeToken<List<SearchAction>>() {
+                        }.getType();
+                        break;
+                    default:
+                        type = null;
+                        break;
                 }
-                dataMap.put((String) key, fileDataList);
-            } catch (IOException e) {
-                LOGGER.log(Level.SEVERE, "", e);
-                break;
+                data = gson.fromJson(reader, type);
+                dataMap.put(auxKey, data);
             }
         }
         return dataMap;
@@ -179,16 +194,54 @@ public class Player implements Playable {
 
     /* La estrategia de visualización es la siguiente:
 
-    Dado un tiempo que queremos reproducir, encontraremos un registro y lo agregaremos a las filas de la tabla correspondiente.
+    Dado un tiempo que queremos reproducir, encontraremos todos los registros iguales o anteriores en tiempo
+     y lo agregaremos a las filas de la tabla correspondiente.
      */
-    private String getDataByCaptureMilliseconds(long milliseconds, String dataType){
+    private List<Object> getDataByCaptureMilliseconds(long milliseconds, String dataType){
         if(milliseconds < this.start || milliseconds > this.end){
             return null;
         }
         return this.dataMap.get(dataType).stream()
-                .map(jsonObject -> jsonParser.parse(jsonObject).getAsJsonObject())
-                .filter(jsonObject -> jsonObject.get(CAPTURE_MILLISECONDS_KEY).getAsLong() == milliseconds)
-                .map(gson::toJson)
-                .findFirst().orElse(null);
+                .map(object -> (Visualizable) object)
+                .filter(object -> object.getCaptureMilliseconds() <= milliseconds)
+                .collect(Collectors.toList());
+    }
+
+    private List<Object> readCsvFile(String filePath, String dataType){
+        List<Object> data = new ArrayList<>();
+        try (BufferedReader br = Files.newBufferedReader(Paths.get(filePath))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                Object model;
+                /* Leer linea a linea y crear lista de objeto segun el tipo*/
+                switch (dataType) {
+                    case PlayerPanel.KEYSTROKES_DATA_TYPE:
+                        model = new Keystroke(line);
+                        break;
+                    case PlayerPanel.MOUSE_MOVES_DATA_TYPE:
+                        model = new MouseMove(line);
+                        break;
+                    case PlayerPanel.MOUSE_CLICKS_DATA_TYPE:
+                        model = new MouseClick(line);
+                        break;
+                    case PlayerPanel.MOUSE_UPS_DATA_TYPE:
+                        model = new MouseUp(line);
+                        break;
+                    case PlayerPanel.TABS_DATA_TYPE:
+                        model = new TabAction(line);
+                        break;
+                    case PlayerPanel.SEARCHS_DATA_TYPE:
+                        model = new SearchAction(line);
+                        break;
+                    default:
+                        model = null;
+                        break;
+                }
+                data.add(model);
+            }
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "", e);
+        }
+        return data;
     }
 }

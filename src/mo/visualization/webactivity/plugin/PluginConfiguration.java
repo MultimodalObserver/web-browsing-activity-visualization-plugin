@@ -7,6 +7,10 @@ import mo.visualization.webactivity.plugin.model.VisualizationConfiguration;
 import mo.visualization.Playable;
 import mo.visualization.VisualizableConfiguration;
 
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import javax.xml.bind.Unmarshaller;
 import java.io.*;
 import java.lang.reflect.Type;
 import java.util.*;
@@ -21,19 +25,12 @@ public class PluginConfiguration implements VisualizableConfiguration {
     private List<File> files;
     private Player player;
 
-    public PluginConfiguration(VisualizationConfiguration temporalConfig) {
-        this.temporalConfig = temporalConfig;
-        this.files = new ArrayList<>();
-        this.player = null;
+    public PluginConfiguration(){
+
     }
 
-    public PluginConfiguration(File file){
-        String fileName = file.getName();
-        String configData = fileName.substring(0, fileName.lastIndexOf("."));
-        String[] configElements = configData.split("_");
-        /* El elemento 0 es string web-activity-visualization*/
-        String configurationName = configElements[1];
-        this.temporalConfig  = new VisualizationConfiguration(configurationName);
+    public PluginConfiguration(VisualizationConfiguration temporalConfig) {
+        this.temporalConfig = temporalConfig;
         this.files = new ArrayList<>();
         this.player = null;
     }
@@ -50,8 +47,13 @@ public class PluginConfiguration implements VisualizableConfiguration {
         }
         this.files.add(file);
         int fileIndex = files.size() - 1;
-        Map<String, String> selectedFilesMap = getFilepaths(this.files.get(fileIndex));
-        this.player = new Player(selectedFilesMap, this.temporalConfig.getName());
+        File lastFile = this.files.get(fileIndex);
+        Map<String, String> selectedFilesMap = getFilepaths(lastFile);
+        try {
+            this.player = new Player(selectedFilesMap, this.temporalConfig.getName());
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -66,7 +68,11 @@ public class PluginConfiguration implements VisualizableConfiguration {
     public Playable getPlayer() {
         if(this.player == null){
             Map<String, String> selectedFilesMap = getFilepaths(this.files.get(0));
-            this.player = new Player(selectedFilesMap, this.temporalConfig.getName());
+            try {
+                this.player = new Player(selectedFilesMap, this.temporalConfig.getName());
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
         }
         return this.player;
     }
@@ -80,27 +86,32 @@ public class PluginConfiguration implements VisualizableConfiguration {
     public File toFile(File parent) {
         String childFileName = "web-activity-visualization_"+this.temporalConfig.getName()+".xml";
         File file = new File(parent, childFileName);
-        try {
-            file.createNewFile();
+        try{
+            FileOutputStream fileOutputStream = new FileOutputStream(file);
+            JAXBContext jaxbContext = JAXBContext.newInstance(VisualizationConfiguration.class);
+            Marshaller marshaller = jaxbContext.createMarshaller();
+            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+            marshaller.marshal(this.temporalConfig, fileOutputStream);
+            fileOutputStream.flush();
+            fileOutputStream.close();
             return file;
-        } catch (IOException ex) {
+        } catch (IOException | JAXBException ex) {
             LOGGER.log(Level.SEVERE, null, ex);
+            return null;
         }
-        return null;
     }
 
     @Override
     public Configuration fromFile(File file) {
-        String fileName = file.getName();
-        if(!fileName.contains("_") || !fileName.contains(".")){
+        try {
+            JAXBContext jaxbContext = JAXBContext.newInstance(VisualizationConfiguration.class);
+            Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
+            VisualizationConfiguration auxConfig = (VisualizationConfiguration) unmarshaller.unmarshal(file);
+            return new PluginConfiguration(auxConfig);
+        } catch (JAXBException e) {
+            e.printStackTrace();
             return null;
         }
-        String configData = fileName.substring(0, fileName.lastIndexOf("."));
-        String[] configElements = configData.split("_");
-        /* El elemento 1 es el string web-activity*/
-        String configurationName = configElements[1];
-        VisualizationConfiguration auxConfig = new VisualizationConfiguration(configurationName);
-        return new PluginConfiguration(auxConfig);
     }
 
     private Map<String, String> getFilepaths(File mapFile){

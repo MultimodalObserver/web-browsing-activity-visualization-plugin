@@ -54,7 +54,7 @@ public class ConfigurationDialog extends JDialog {
         constraints.gridy=0;
         this.setConstraintsForRightSide(constraints, false);
         constraints.insets= new Insets(10,5,5,10);
-        contentPane.add(this.configurationNameTextField);
+        contentPane.add(this.configurationNameTextField, constraints);
 
         /* Coonfiguration Name error Label*/
         constraints = new GridBagConstraints();

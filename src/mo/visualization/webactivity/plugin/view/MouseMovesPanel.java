@@ -24,25 +24,26 @@ class MouseMovesPanel extends BasePanel {
     }
 
     @Override
-    void updateData(String data) {
-        MouseMove mouseMove = gson.fromJson(data, MouseMove.class);
-        Object[] rowData = new String[]{
-                mouseMove.getBrowser(),
-                mouseMove.getPageUrl(),
-                mouseMove.getPageTitle(),
-                String.valueOf(mouseMove.getxPage()),
-                String.valueOf(mouseMove.getyPage()),
-                String.valueOf(mouseMove.getxClient()),
-                String.valueOf(mouseMove.getyClient()),
-                String.valueOf(mouseMove.getxScreen()),
-                String.valueOf(mouseMove.getyScreen()),
-                String.valueOf(mouseMove.getxMovement()),
-                String.valueOf(mouseMove.getyMovement()),
-                String.valueOf(mouseMove.getCaptureTimestamp())
-        };
-        this.tableModel.addRow(rowData);
-        /*int rowCount = this.table.getRowCount();
-        this.tableModel.fireTableRowsInserted(rowCount, rowCount + 1);*/
+    void updateData(List<Object> data) {
+        this.clearTable();
+        for (Object datum : data) {
+            MouseMove mouseMove = (MouseMove) datum;
+            Object[] rowData = new String[]{
+                    mouseMove.getBrowser(),
+                    mouseMove.getPageUrl(),
+                    mouseMove.getPageTitle(),
+                    String.valueOf(mouseMove.getxPage()),
+                    String.valueOf(mouseMove.getyPage()),
+                    String.valueOf(mouseMove.getxClient()),
+                    String.valueOf(mouseMove.getyClient()),
+                    String.valueOf(mouseMove.getxScreen()),
+                    String.valueOf(mouseMove.getyScreen()),
+                    String.valueOf(mouseMove.getxMovement()),
+                    String.valueOf(mouseMove.getyMovement()),
+                    String.valueOf(mouseMove.getCaptureMilliseconds())
+            };
+            this.insertNewRow(rowData);
+        }
     }
 
 }

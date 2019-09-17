@@ -1,12 +1,24 @@
 package mo.visualization.webactivity.plugin.model;
 
-public class Keystroke {
+public class Keystroke implements Visualizable {
     private String browser;
     private String pageUrl;
     private String pageTitle;
     private String keyValue;
-    private String captureTimestamp;
+    private Long captureMilliseconds;
 
+    public Keystroke(){
+
+    }
+
+    public Keystroke(String csvLine){
+        String[] data = csvLine.split(Separator.CSV_SEPARATOR.getValue());
+        this.browser = data[0];
+        this.pageUrl = data[1];
+        this.pageTitle = data[2];
+        this.keyValue = data[3];
+        this.captureMilliseconds = Long.valueOf(data[4]);
+    }
 
     public String getBrowser() {
         return browser;
@@ -40,11 +52,12 @@ public class Keystroke {
         this.keyValue = keyValue;
     }
 
-    public String getCaptureTimestamp() {
-        return captureTimestamp;
+    @Override
+    public Long getCaptureMilliseconds() {
+        return captureMilliseconds;
     }
 
-    public void setCaptureTimestamp(String captureTimestamp) {
-        this.captureTimestamp = captureTimestamp;
+    public void setCaptureMilliseconds(Long captureMilliseconds) {
+        this.captureMilliseconds = captureMilliseconds;
     }
 }

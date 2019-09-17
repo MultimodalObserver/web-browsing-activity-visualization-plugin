@@ -1,6 +1,6 @@
 package mo.visualization.webactivity.plugin.model;
 
-public class MouseMove {
+public class MouseMove implements Visualizable {
 
     private String browser;
     private String pageUrl;
@@ -13,7 +13,27 @@ public class MouseMove {
     private Long yScreen;
     private Long xMovement;
     private Long yMovement;
-    private Long captureTimestamp;
+    private Long captureMilliseconds;
+
+    public MouseMove(){
+
+    }
+
+    public MouseMove(String csvLine){
+        String[] data = csvLine.split(Separator.CSV_SEPARATOR.getValue());
+        this.browser = data[0];
+        this.pageUrl = data[1];
+        this.pageTitle = data[2];
+        this.xPage = Long.parseLong(data[3]);
+        this.yPage = Long.parseLong(data[4]);
+        this.xClient = Long.parseLong(data[5]);
+        this.yClient = Long.parseLong(data[6]);
+        this.xScreen = Long.parseLong(data[7]);
+        this.yScreen = Long.parseLong(data[8]);
+        this.xMovement = Long.parseLong(data[9]);
+        this.yMovement = Long.parseLong(data[10]);
+        this.captureMilliseconds = Long.parseLong(data[11]);
+    }
 
     public String getBrowser() {
         return browser;
@@ -103,11 +123,12 @@ public class MouseMove {
         this.yMovement = yMovement;
     }
 
-    public Long getCaptureTimestamp() {
-        return captureTimestamp;
+    @Override
+    public Long getCaptureMilliseconds() {
+        return captureMilliseconds;
     }
 
-    public void setCaptureTimestamp(Long captureTimestamp) {
-        this.captureTimestamp = captureTimestamp;
+    public void setCaptureMilliseconds(Long captureMilliseconds) {
+        this.captureMilliseconds = captureMilliseconds;
     }
 }

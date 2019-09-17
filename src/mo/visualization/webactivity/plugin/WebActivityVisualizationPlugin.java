@@ -30,7 +30,7 @@ public class WebActivityVisualizationPlugin implements VisualizationProvider {
 
     private static final Logger LOGGER = Logger.getLogger(WebActivityVisualizationPlugin.class.getName());
     private I18n i18n;
-    List<Configuration> configurations;
+    private List<Configuration> configurations;
 
     public WebActivityVisualizationPlugin() {
         this.i18n = new I18n(WebActivityVisualizationPlugin.class);
@@ -39,7 +39,7 @@ public class WebActivityVisualizationPlugin implements VisualizationProvider {
 
     @Override
     public String getName() {
-        return this.i18n.s("PLUGIN_DISPLAYED_NAME");
+        return this.i18n.s("pluginDisplayedName");
     }
 
     @Override
@@ -71,7 +71,8 @@ public class WebActivityVisualizationPlugin implements VisualizationProvider {
             for (XElement pathX : pathsX) {
                 String path = pathX.getString();
                 File archive = new File(file.getParentFile(), path);
-                Configuration config = new PluginConfiguration(archive);
+                Configuration config = new PluginConfiguration();
+                config = config.fromFile(archive);
                 processesVisualizationPlugin.configurations.add(config);
             }
             return processesVisualizationPlugin;

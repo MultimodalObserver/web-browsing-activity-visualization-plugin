@@ -14,8 +14,8 @@ import java.util.List;
 public abstract class BasePanel extends JPanel {
 
     private JLabel noDataLabel;
-    JTable table;
-    DefaultTableModel tableModel;
+    private JTable table;
+    private DefaultTableModel tableModel;
     I18n i18n;
     List<String> tableHeaders;
     final Gson gson;
@@ -30,13 +30,7 @@ public abstract class BasePanel extends JPanel {
     }
 
     abstract List<String> getTableHeaders();
-    abstract void updateData(String data);
-
-
-
-    public void showPanel(boolean show){
-        this.setVisible(show);
-    }
+    abstract void updateData(List<Object> data);
 
     private void initComponents(){
         /* Iniciamos la tabla y el modelo*/
@@ -60,7 +54,7 @@ public abstract class BasePanel extends JPanel {
         this.setVisible(true);
     }
 
-    public List<String> initCommonsHeaders(){
+    List<String> initCommonsHeaders(){
         List<String> headers = new ArrayList<>();
         headers.add(this.i18n.s("browserColumnName"));
         headers.add(this.i18n.s("pageUrlColumnName"));
@@ -68,7 +62,7 @@ public abstract class BasePanel extends JPanel {
         return headers;
     }
 
-    public void addPositionHeaders(List<String> headers){
+    void addPositionHeaders(List<String> headers){
         headers.add(this.i18n.s("xPageColumnName"));
         headers.add(this.i18n.s("yPageColumnName"));
         headers.add(this.i18n.s("xClientColumnName"));
@@ -95,5 +89,14 @@ public abstract class BasePanel extends JPanel {
             int columnWidth = Math.round(this.columnWidths[i] * tableWidth);
             column.setPreferredWidth(columnWidth);
         }
+    }
+
+    void clearTable(){
+        this.tableModel.getDataVector().removeAllElements();
+        this.tableModel.fireTableDataChanged();
+    }
+
+    void insertNewRow(Object[] rowData){
+        this.tableModel.addRow(rowData);
     }
 }
