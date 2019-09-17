@@ -32,7 +32,7 @@ class MouseUpsPanel extends BasePanel {
                     mouseUp.getPageUrl(),
                     mouseUp.getPageTitle(),
                     mouseUp.getSelectedText(),
-                    String.valueOf(mouseUp.getCaptureMilliseconds())
+                    String.valueOf(mouseUp.getCaptureTimestamp())
             };
             this.insertNewRow(rowData);
         }

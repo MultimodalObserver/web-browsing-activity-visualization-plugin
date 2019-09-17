@@ -32,7 +32,7 @@ public class SearchsPanel extends BasePanel{
                     searchAction.getPageUrl(),
                     searchAction.getPageTitle(),
                     searchAction.getSearch(),
-                    searchAction.getCaptureMilliseconds()
+                    searchAction.getCaptureTimestamp()
             };
             this.insertNewRow(rowData);
         }

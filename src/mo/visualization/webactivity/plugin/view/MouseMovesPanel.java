@@ -3,7 +3,6 @@ package mo.visualization.webactivity.plugin.view;
 import mo.visualization.webactivity.plugin.model.MouseMove;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 class MouseMovesPanel extends BasePanel {
     MouseMovesPanel() {
@@ -18,7 +17,7 @@ class MouseMovesPanel extends BasePanel {
     @Override
     List<String> getTableHeaders() {
         List<String> headers = this.initCommonsHeaders();
-        this.addPositionHeaders(headers);
+        this.addMousePositionHeaders(headers, true);
         headers.add(this.i18n.s("captureTimestampColumnName"));
         return headers;
     }
@@ -40,7 +39,7 @@ class MouseMovesPanel extends BasePanel {
                     String.valueOf(mouseMove.getyScreen()),
                     String.valueOf(mouseMove.getxMovement()),
                     String.valueOf(mouseMove.getyMovement()),
-                    String.valueOf(mouseMove.getCaptureMilliseconds())
+                    String.valueOf(mouseMove.getCaptureTimestamp())
             };
             this.insertNewRow(rowData);
         }

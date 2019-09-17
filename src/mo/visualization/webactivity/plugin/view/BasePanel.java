@@ -62,15 +62,17 @@ public abstract class BasePanel extends JPanel {
         return headers;
     }
 
-    void addPositionHeaders(List<String> headers){
+    void addMousePositionHeaders(List<String> headers, boolean withMovement){
         headers.add(this.i18n.s("xPageColumnName"));
         headers.add(this.i18n.s("yPageColumnName"));
         headers.add(this.i18n.s("xClientColumnName"));
         headers.add(this.i18n.s("yClientColumnName"));
         headers.add(this.i18n.s("xScreenColumnName"));
         headers.add(this.i18n.s("yScreenColumnName"));
-        headers.add(this.i18n.s("xMovementColumnName"));
-        headers.add(this.i18n.s("yMovementColumnName"));
+        if(withMovement){
+            headers.add(this.i18n.s("xMovementColumnName"));
+            headers.add(this.i18n.s("yMovementColumnName"));
+        }
     }
 
     void addHeaders(){

@@ -42,7 +42,7 @@ public class TabsPanel extends BasePanel {
                     tabAction.getTabIndex(),
                     tabAction.getTabId(),
                     tabAction.getWindowId(),
-                    tabAction.getCaptureMilliseconds()
+                    tabAction.getCaptureTimestamp()
             };
             this.insertNewRow(rowData);
         }

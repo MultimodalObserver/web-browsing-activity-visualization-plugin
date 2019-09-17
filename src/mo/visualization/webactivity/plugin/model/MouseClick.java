@@ -11,30 +11,11 @@ public class MouseClick implements Visualizable {
     private Long yClient;
     private Long xScreen;
     private Long yScreen;
-    private Long xMovement;
-    private Long yMovement;
     private Integer button;
-    private Long captureMilliseconds;
+    private Long captureTimestamp;
 
     public MouseClick(){
 
-    }
-
-    public MouseClick(String csvLine){
-        String[] data = csvLine.split(Separator.CSV_SEPARATOR.getValue());
-        this.browser = data[0];
-        this.pageUrl = data[1];
-        this.pageTitle = data[2];
-        this.xPage = Long.parseLong(data[3]);
-        this.yPage = Long.parseLong(data[4]);
-        this.xClient = Long.parseLong(data[5]);
-        this.yClient = Long.parseLong(data[6]);
-        this.xScreen = Long.parseLong(data[7]);
-        this.yScreen = Long.parseLong(data[8]);
-        this.xMovement = Long.parseLong(data[9]);
-        this.yMovement = Long.parseLong(data[10]);
-        this.button = Integer.parseInt(data[11]);
-        this.captureMilliseconds = Long.parseLong(data[12]);
     }
 
     public String getBrowser() {
@@ -109,35 +90,20 @@ public class MouseClick implements Visualizable {
         this.yScreen = yScreen;
     }
 
-    public Long getxMovement() {
-        return xMovement;
-    }
-
-    public void setxMovement(Long xMovement) {
-        this.xMovement = xMovement;
-    }
-
-    public Long getyMovement() {
-        return yMovement;
-    }
-
-    public void setyMovement(Long yMovement) {
-        this.yMovement = yMovement;
-    }
-
-    public Long getCaptureMilliseconds() {
-        return captureMilliseconds;
-    }
-
-    public void setCaptureMilliseconds(Long captureMilliseconds) {
-        this.captureMilliseconds = captureMilliseconds;
-    }
-
     public Integer getButton() {
         return button;
     }
 
     public void setButton(Integer button) {
         this.button = button;
+    }
+
+    @Override
+    public Long getCaptureTimestamp() {
+        return captureTimestamp;
+    }
+
+    public void setCaptureTimestamp(Long captureTimestamp) {
+        this.captureTimestamp = captureTimestamp;
     }
 }

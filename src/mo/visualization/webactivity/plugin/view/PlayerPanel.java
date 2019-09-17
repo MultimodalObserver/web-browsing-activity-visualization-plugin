@@ -9,10 +9,6 @@ import java.util.Map;
 
 public class PlayerPanel extends JTabbedPane {
 
-    private static final int KEYSTROKES_TAB_INDEX = 0;
-    private static final int MOUSE_MOVES_TAB_INDEX = 1;
-    private static final int MOUSE_CLICKS_TAB_INDEX = 2;
-    private static final int MOUSE_UPS_TAB_INDEX = 3;
     private JLabel noDataLabel;
     private Map<String, BasePanel> panelsMap;
 

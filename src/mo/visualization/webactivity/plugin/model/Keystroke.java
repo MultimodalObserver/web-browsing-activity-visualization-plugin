@@ -5,19 +5,10 @@ public class Keystroke implements Visualizable {
     private String pageUrl;
     private String pageTitle;
     private String keyValue;
-    private Long captureMilliseconds;
+    private Long captureTimestamp;
 
     public Keystroke(){
 
-    }
-
-    public Keystroke(String csvLine){
-        String[] data = csvLine.split(Separator.CSV_SEPARATOR.getValue());
-        this.browser = data[0];
-        this.pageUrl = data[1];
-        this.pageTitle = data[2];
-        this.keyValue = data[3];
-        this.captureMilliseconds = Long.valueOf(data[4]);
     }
 
     public String getBrowser() {
@@ -53,11 +44,11 @@ public class Keystroke implements Visualizable {
     }
 
     @Override
-    public Long getCaptureMilliseconds() {
-        return captureMilliseconds;
+    public Long getCaptureTimestamp() {
+        return captureTimestamp;
     }
 
-    public void setCaptureMilliseconds(Long captureMilliseconds) {
-        this.captureMilliseconds = captureMilliseconds;
+    public void setCaptureTimestamp(Long captureTimestamp) {
+        this.captureTimestamp = captureTimestamp;
     }
 }

@@ -33,7 +33,7 @@ class KeystrokesPanel extends BasePanel {
                     keystroke.getPageUrl(),
                     keystroke.getPageTitle(),
                     keystroke.getKeyValue(),
-                    String.valueOf(keystroke.getCaptureMilliseconds())
+                    String.valueOf(keystroke.getCaptureTimestamp())
             };
             this.insertNewRow(rowData);
         }

@@ -9,15 +9,15 @@ class MouseClicksPanel extends BasePanel {
         super();
         this.tableHeaders = this.getTableHeaders();
         this.addHeaders();
-        this.columnWidths = new float[]{0.0415f, 0.1245f, 0.083f, 0.083f, 0.083f, 0.083f, 0.083f,
-                0.083f, 0.083f,0.083f, 0.0415f, 0.06225f, 0.06225f};
+        this.columnWidths = new float[]{0.083f, 0.1245f, 0.083f, 0.083f, 0.083f, 0.083f,
+                0.083f, 0.083f,0.083f, 0.14525f, 0.06225f};
         this.resizeColumns();
     }
 
     @Override
     List<String> getTableHeaders() {
         List<String> headers = this.initCommonsHeaders();
-        this.addPositionHeaders(headers);
+        this.addMousePositionHeaders(headers, false);
         headers.add(this.i18n.s("mouseClickButtonColumnName"));
         headers.add(this.i18n.s("captureTimestampColumnName"));
         return headers;
@@ -38,10 +38,8 @@ class MouseClicksPanel extends BasePanel {
                     String.valueOf(mouseClick.getyClient()),
                     String.valueOf(mouseClick.getxScreen()),
                     String.valueOf(mouseClick.getyScreen()),
-                    String.valueOf(mouseClick.getxMovement()),
-                    String.valueOf(mouseClick.getyMovement()),
                     this.getButtonAsString(mouseClick.getButton()),
-                    String.valueOf(mouseClick.getCaptureMilliseconds())
+                    String.valueOf(mouseClick.getCaptureTimestamp())
             };
             this.insertNewRow(rowData);
         }

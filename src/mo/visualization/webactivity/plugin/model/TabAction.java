@@ -9,21 +9,10 @@ public class TabAction implements Visualizable {
     private Integer tabIndex;
     private Integer tabId;
     private Integer windowId;
-    private Long captureMilliseconds;
+    private Long captureTimestamp;
 
     public TabAction(){
 
-    }
-
-    public TabAction(String csvLine){
-        String[] data = csvLine.split(Separator.CSV_SEPARATOR.getValue());
-        this.browser = data[0];
-        this.tabUrl = data[1];
-        this.tabTitle = data[2];
-        this.actionType = data[3];
-        this.tabId = Integer.parseInt(data[4]);
-        this.windowId = Integer.parseInt(data[5]);
-        this.captureMilliseconds = Long.parseLong(data[6]);
     }
 
     public String getBrowser() {
@@ -75,12 +64,12 @@ public class TabAction implements Visualizable {
     }
 
     @Override
-    public Long getCaptureMilliseconds() {
-        return captureMilliseconds;
+    public Long getCaptureTimestamp() {
+        return captureTimestamp;
     }
 
-    public void setCaptureMilliseconds(Long captureMilliseconds) {
-        this.captureMilliseconds = captureMilliseconds;
+    public void setCaptureTimestamp(Long captureTimestamp) {
+        this.captureTimestamp = captureTimestamp;
     }
 
     public Integer getTabIndex() {
