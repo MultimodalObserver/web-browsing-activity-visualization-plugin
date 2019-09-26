@@ -2,6 +2,7 @@ package mo.visualization.webactivity.plugin.view;
 
 import mo.visualization.webactivity.plugin.model.TabAction;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,20 +32,22 @@ public class TabsPanel extends BasePanel {
 
     @Override
     void updateData(List<Object> data) {
-        this.clearTable();
-        for (Object datum : data) {
-            TabAction tabAction = (TabAction) datum;
-            Object[] rowData = new Object[]{
-                    tabAction.getBrowser(),
-                    tabAction.getTabUrl(),
-                    tabAction.getTabTitle(),
-                    tabAction.getActionType(),
-                    tabAction.getTabIndex(),
-                    tabAction.getTabId(),
-                    tabAction.getWindowId(),
-                    tabAction.getCaptureTimestamp()
-            };
-            this.insertNewRow(rowData);
-        }
+        SwingUtilities.invokeLater(() -> {
+            this.clearTable();
+            for (Object datum : data) {
+                TabAction tabAction = (TabAction) datum;
+                Object[] rowData = new Object[]{
+                        tabAction.getBrowser(),
+                        tabAction.getTabUrl(),
+                        tabAction.getTabTitle(),
+                        tabAction.getActionType(),
+                        tabAction.getTabIndex(),
+                        tabAction.getTabId(),
+                        tabAction.getWindowId(),
+                        tabAction.getCaptureTimestamp()
+                };
+                this.insertNewRow(rowData);
+            }
+        });
     }
 }

@@ -37,9 +37,7 @@ public abstract class BasePanel extends JPanel {
         this.tableModel = new DefaultTableModel();
         this.table = new JTable(this.tableModel);
         this.table.setFillsViewportHeight(true);
-        this.table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         this.table.setCellSelectionEnabled(true);
-        this.table.setShowHorizontalLines(false);
         /* Iniciamos el scroll pane que tendra la tabla */
         JScrollPane scrollPane = new JScrollPane(this.table);
         GridBagConstraints constraints = new GridBagConstraints();
@@ -94,11 +92,12 @@ public abstract class BasePanel extends JPanel {
     }
 
     void clearTable(){
-        this.tableModel.getDataVector().removeAllElements();
-        this.tableModel.fireTableDataChanged();
+        this.tableModel.setRowCount(0);
     }
 
     void insertNewRow(Object[] rowData){
         this.tableModel.addRow(rowData);
     }
+
+
 }

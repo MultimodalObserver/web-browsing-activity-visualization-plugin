@@ -1,7 +1,9 @@
 package mo.visualization.webactivity.plugin.view;
 
+import mo.visualization.webactivity.plugin.model.MouseMove;
 import mo.visualization.webactivity.plugin.model.MouseUp;
 
+import javax.swing.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -24,17 +26,19 @@ class MouseUpsPanel extends BasePanel {
 
     @Override
     void updateData(List<Object> data) {
-        this.clearTable();
-        for (Object datum : data) {
-            MouseUp mouseUp = (MouseUp) datum;
-            Object[] rowData = new String[]{
-                    mouseUp.getBrowser(),
-                    mouseUp.getPageUrl(),
-                    mouseUp.getPageTitle(),
-                    mouseUp.getSelectedText(),
-                    String.valueOf(mouseUp.getCaptureTimestamp())
-            };
-            this.insertNewRow(rowData);
-        }
+        SwingUtilities.invokeLater(() -> {
+            this.clearTable();
+            for (Object datum : data) {
+                MouseUp mouseUp = (MouseUp) datum;
+                Object[] rowData = new String[]{
+                        mouseUp.getBrowser(),
+                        mouseUp.getPageUrl(),
+                        mouseUp.getPageTitle(),
+                        mouseUp.getSelectedText(),
+                        String.valueOf(mouseUp.getCaptureTimestamp())
+                };
+                this.insertNewRow(rowData);
+            }
+        });
     }
 }

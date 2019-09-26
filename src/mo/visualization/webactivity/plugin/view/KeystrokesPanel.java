@@ -3,6 +3,7 @@ package mo.visualization.webactivity.plugin.view;
 
 import mo.visualization.webactivity.plugin.model.Keystroke;
 
+import javax.swing.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,18 +26,20 @@ class KeystrokesPanel extends BasePanel {
 
     @Override
     void updateData(List<Object> data) {
-        this.clearTable();
-        for (Object datum : data) {
-            Keystroke keystroke = (Keystroke) datum;
-            Object[] rowData = new String[]{
-                    keystroke.getBrowser(),
-                    keystroke.getPageUrl(),
-                    keystroke.getPageTitle(),
-                    keystroke.getKeyValue(),
-                    String.valueOf(keystroke.getCaptureTimestamp())
-            };
-            this.insertNewRow(rowData);
-        }
+        SwingUtilities.invokeLater(() -> {
+            this.clearTable();
+            for (Object datum : data) {
+                Keystroke keystroke = (Keystroke) datum;
+                Object[] rowData = new String[]{
+                        keystroke.getBrowser(),
+                        keystroke.getPageUrl(),
+                        keystroke.getPageTitle(),
+                        keystroke.getKeyValue(),
+                        String.valueOf(keystroke.getCaptureTimestamp())
+                };
+                this.insertNewRow(rowData);
+            }
+        });
     }
 
 }

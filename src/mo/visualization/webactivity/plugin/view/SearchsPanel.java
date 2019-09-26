@@ -2,6 +2,7 @@ package mo.visualization.webactivity.plugin.view;
 
 import mo.visualization.webactivity.plugin.model.SearchAction;
 
+import javax.swing.*;
 import java.util.List;
 
 public class SearchsPanel extends BasePanel{
@@ -24,17 +25,19 @@ public class SearchsPanel extends BasePanel{
 
     @Override
     void updateData(List<Object> data) {
-        this.clearTable();
-        for (Object datum : data) {
-            SearchAction searchAction = (SearchAction) datum;
-            Object[] rowData = new Object[]{
-                    searchAction.getBrowser(),
-                    searchAction.getPageUrl(),
-                    searchAction.getPageTitle(),
-                    searchAction.getSearch(),
-                    searchAction.getCaptureTimestamp()
-            };
-            this.insertNewRow(rowData);
-        }
+        SwingUtilities.invokeLater(() -> {
+            this.clearTable();
+            for (Object datum : data) {
+                SearchAction searchAction = (SearchAction) datum;
+                Object[] rowData = new Object[]{
+                        searchAction.getBrowser(),
+                        searchAction.getPageUrl(),
+                        searchAction.getPageTitle(),
+                        searchAction.getSearch(),
+                        searchAction.getCaptureTimestamp()
+                };
+                this.insertNewRow(rowData);
+            }
+        });
     }
 }
